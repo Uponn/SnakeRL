@@ -1,18 +1,35 @@
 import sys
+import time
 import random
+
+import numpy
 import numpy as np
+import pprint
 
 import pygame
 
 
 SIZE = 10
 PADDING = 40
-FPS = 1
+FPS = 5
 MIN_WIDTH_LIMIT = 100
 MIN_HEIGHT_LIMIT = 100
 SNAKE_LENGTH = 5
-SNAKE_COORDINATES = 30
+SNAKE_COORDINATES = 20
 TEXT_FONT = 20
+MOVES_TO_IDX = {'up': 0, 'down': 1, 'left': 2, 'right': 3}
+IDX_TO_MOVES = {0: 'up', 1: 'down', 2: 'left', 3: 'right'}
+
+
+class QLearning:
+    def __init__(self, num_states, num_actions, learning_rate=0.1, discount_factor=1.0):
+        self.q = np.zeros((num_states, num_actions))
+        self.a = learning_rate
+        self.g = discount_factor
+
+    def update(self, st, at, rt, st1):
+        # print('st', st, 'at', at, 'rt', rt, 'st1', st1)
+        self.q[st, at] = (1 - self.a) * self.q[st, at] + self.a * (rt + self.g * np.max(self.q[st1]))
 
 
 class Game:
@@ -32,6 +49,8 @@ class Game:
         self.apple = Apple(self.board, self.borders)
         self.snake = Snake(self.board)
         self.text = Text(self.board)
+        self.q = QLearning(10 ** 2, 4)
+        self.populate_q_table(self.borders.draw_borders())
 
     def play(self):
         clock = pygame.time.Clock()
@@ -40,6 +59,10 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.going = False
+                    with numpy.printoptions(threshold=numpy.inf):
+                        for i, q in enumerate(self.q.q):
+                            print(i)
+                            print(q)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT and self.direction != 'right':
                         self.direction = 'left'
@@ -54,11 +77,29 @@ class Game:
             self.board.fill(pygame.color.Color('green'))
             rect = self.borders.draw_borders()
             self.apple.spawn()
+            # moves = self.snake.compute_possible_moves(self.direction, rect)
+            # self.snake.move_for_q_learning(self.direction, self.apple)
+            # random.shuffle(moves)
             # self.direction = moves[0]
-            score = self.snake.move(self.direction, rect, self.apple, self)
-            self.text.display_score(self.score)
-            self.text.display_percents(self.get_percent())
+            st = self.state_for_agentt(self.snake)
+            # self.direction = IDX_TO_MOVES[np.argmax(self.q.q[st])]
+            # print(IDX_TO_MOVES[np.argmax(self.q.q[st])])
+            self.direction = IDX_TO_MOVES[np.argmax(self.q.q[st])]
+            self.snake.move(self.direction, rect, self.apple, self)
+            # rt = score
+            # st1 = self.state_for_agent(self.snake)
+            # self.text.display_score(self.score)
+            # self.text.display_percents(self.get_percent())
+            # pygame.display.flip()
             pygame.display.flip()
+
+    def state_for_agent(self, agent):
+        # columns = int((self.board.get_height() - PADDING) / SIZE)
+        return int(((agent.xx[0] - 20) / 10) + ((agent.yy[0] - 20) / 10) * 10)
+
+    def state_for_agentt(self, agent):
+        # columns = int((self.board.get_height() - PADDING) / SIZE)
+        return int(((agent.x[0] - 20) / 10) + ((agent.y[0] - 20) / 10) * 10)
 
     def increment_score(self):
         self.score += 1
@@ -67,19 +108,19 @@ class Game:
         self.text.display_game_won()
         self.fps = 0
 
-    def game_over(self):
-        self.text.display_game_over()
+    # def game_over(self):
+    #     self.text.display_game_over()
         # time.sleep(50)
 
 
-    def reset_game(self):
-        self.direction = 'right'
-        self.fps = FPS
-        self.score = 0
-        self.snake.reset_length()
-        self.snake.set_initial_coords()
-        self.apple.generate_random_coords()
-        self.play()
+    # def reset_game(self):
+    #     self.direction = 'right'
+    #     self.fps = FPS
+    #     self.score = 0
+    #     self.snake.reset_length()
+    #     self.snake.set_initial_coords()
+    #     self.apple.generate_random_coords()
+    #     self.play()
 
     def get_fps(self):
         return self.fps
@@ -95,6 +136,27 @@ class Game:
         percent = (board - (board - self.snake.get_length())) / board * 100
         return percent
 
+    def reset_q_table(self):
+        self.q.q.fill(0)
+
+    def populate_q_table(self, rect):
+        for i in range(2000):
+            self.snake.set_initial_coordss()
+            flag = True
+            while flag:
+                moves = self.snake.compute_possible_moves(self.direction, rect)
+                random.shuffle(moves)
+                st = self.state_for_agent(self.snake)
+                at = MOVES_TO_IDX[moves[0]]
+                self.direction = moves[0]
+                if self.snake.xx[0] == self.apple.get_apple_coordinates()[0] and self.snake.yy[0] == \
+                        self.apple.get_apple_coordinates()[1]:
+                    flag = False
+                score = self.snake.move_for_q_learning(self.direction, self.apple)
+                rt = score
+                st1 = self.state_for_agent(self.snake)
+                self.q.update(st, at, rt, st1)
+
 
 class Snake:
     def __init__(self, board):
@@ -105,11 +167,18 @@ class Snake:
         self.length = SNAKE_LENGTH
         self.x = []
         self.y = []
+        self.xx = []
+        self.yy = []
         self.set_initial_coords()
+        self.set_initial_coordss()
 
     def set_initial_coords(self):
         self.x = [SNAKE_COORDINATES] * self.length
         self.y = [SNAKE_COORDINATES] * self.length
+
+    def set_initial_coordss(self):
+        self.xx = [SNAKE_COORDINATES] * self.length
+        self.yy = [SNAKE_COORDINATES] * self.length
 
     def reset_length(self):
         self.length = SNAKE_LENGTH
@@ -122,13 +191,13 @@ class Snake:
             'left': 'right',
             'right': 'left'
         }
-        if self.x[0] > rect.width:
+        if self.xx[0] > rect.width:
             directions.remove('right')
-        if self.x[0] <= self.x[0] <= rect.x:
+        if self.xx[0] <= self.xx[0] <= rect.x:
             directions.remove('left')
-        if self.y[0] > rect.height:
+        if self.yy[0] > rect.height:
             directions.remove('down')
-        if self.y[0] <= rect.y:
+        if self.yy[0] <= rect.y:
             directions.remove('up')
 
         if ban_reverse[direction] in directions:
@@ -150,6 +219,23 @@ class Snake:
         # print(directions)
         return directions
 
+    def move_for_q_learning(self, direction, apple):
+        for i in range(self.length - 1, 0, -1):
+            self.xx[i] = self.xx[i - 1]
+            self.yy[i] = self.yy[i - 1]
+
+        if direction == 'right':
+            self.xx[0] += SIZE
+        if direction == 'left':
+            self.xx[0] -= SIZE
+        if direction == 'up':
+            self.yy[0] -= SIZE
+        if direction == 'down':
+            self.yy[0] += SIZE
+
+        return 10 if self.xx[0] == apple.get_apple_coordinates()[0] and self.yy[0] == apple.get_apple_coordinates()[
+            1] else -5
+
     def move(self, direction, rect, apple, game):
         # print('x', self.x)
         # print('y', self.y)
@@ -170,21 +256,23 @@ class Snake:
         # check if the head of the snake is on the current location of the spawned apple
         if self.x[0] == apple.get_apple_coordinates()[0] and self.y[0] == apple.get_apple_coordinates()[1]:
             apple.respawn(self.x, self.y)
+            # self.set_initial_coords()
+            game.reset_q_table()
+            game.populate_q_table(rect)
             self.increase_size()
             game.increment_score()
 
         # checks for border collision
-        if self.border_collision(rect):
-            game.game_over()
+        # if self.border_collision(rect):
+        #     game.game_over()
 
         # checks for snake collision in itself
-        if self.body_collision():
-            game.game_over()
+        # if self.body_collision():
+        #     game.game_over()
 
         if game.get_fps() != 0:
             self.draw()
 
-        return 10 if self.x[0] == apple.get_apple_coordinates()[0] and self.y[0] == apple.get_apple_coordinates()[1] else -1
 
     def border_collision(self, rect):
         if self.x[0] > rect.width + SIZE or self.x[0] <= rect.x - SIZE \
