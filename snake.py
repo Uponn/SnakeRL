@@ -11,10 +11,10 @@ import pygame
 
 SIZE = 10
 PADDING = 40
-FPS = 5
+FPS = 1
 MIN_WIDTH_LIMIT = 100
 MIN_HEIGHT_LIMIT = 100
-SNAKE_LENGTH = 5
+SNAKE_LENGTH = 3
 SNAKE_COORDINATES = 20
 TEXT_FONT = 20
 MOVES_TO_IDX = {'up': 0, 'down': 1, 'left': 2, 'right': 3}
@@ -77,14 +77,12 @@ class Game:
             self.board.fill(pygame.color.Color('green'))
             rect = self.borders.draw_borders()
             self.apple.spawn()
-            # moves = self.snake.compute_possible_moves(self.direction, rect)
-            # self.snake.move_for_q_learning(self.direction, self.apple)
-            # random.shuffle(moves)
-            # self.direction = moves[0]
-            st = self.state_for_agentt(self.snake)
-            # self.direction = IDX_TO_MOVES[np.argmax(self.q.q[st])]
-            # print(IDX_TO_MOVES[np.argmax(self.q.q[st])])
-            self.direction = IDX_TO_MOVES[np.argmax(self.q.q[st])]
+            self.snake.spawn()
+            # asd = self.q.q[1].copy()
+            st = game.state_for_agentt(self.snake)
+            # st = game.get_state_for_whole_body(self.snake)
+            self.direction = IDX_TO_MOVES[np.argmax(game.q.q[st])]
+            # moves = self.snake.compute_possible_moves(self.direction, rect, st, self)
             self.snake.move(self.direction, rect, self.apple, self)
             # rt = score
             # st1 = self.state_for_agent(self.snake)
@@ -97,9 +95,20 @@ class Game:
         # columns = int((self.board.get_height() - PADDING) / SIZE)
         return int(((agent.xx[0] - 20) / 10) + ((agent.yy[0] - 20) / 10) * 10)
 
+    def get_state_for_agent(self, x, y):
+        # print(type(x), type(y))
+        # columns = int((self.board.get_height() - PADDING) / SIZE)
+        return int(((x - 20) / 10) + ((y - 20) / 10) * 10)
+
     def state_for_agentt(self, agent):
         # columns = int((self.board.get_height() - PADDING) / SIZE)
         return int(((agent.x[0] - 20) / 10) + ((agent.y[0] - 20) / 10) * 10)
+
+    def get_state_for_whole_body(self, agent):
+        result = []
+        for x, y in zip(agent.x, agent.y):
+            result.append(int(((x - 20) / 10) + ((y - 20) / 10) * 10))
+        return result
 
     def increment_score(self):
         self.score += 1
@@ -140,22 +149,28 @@ class Game:
         self.q.q.fill(0)
 
     def populate_q_table(self, rect):
-        for i in range(2000):
-            self.snake.set_initial_coordss()
+        initial_state = self.get_state_for_whole_body(self.snake)
+        for i in range(400):
+            self.snake.xx = self.snake.x.copy()
+            self.snake.yy = self.snake.y.copy()
             flag = True
             while flag:
-                moves = self.snake.compute_possible_moves(self.direction, rect)
-                random.shuffle(moves)
                 st = self.state_for_agent(self.snake)
+                moves = self.snake.compute_possible_moves(self.direction, rect, initial_state, self)
+                if not moves:
+                    break
+                random.shuffle(moves)
                 at = MOVES_TO_IDX[moves[0]]
                 self.direction = moves[0]
-                if self.snake.xx[0] == self.apple.get_apple_coordinates()[0] and self.snake.yy[0] == \
-                        self.apple.get_apple_coordinates()[1]:
-                    flag = False
                 score = self.snake.move_for_q_learning(self.direction, self.apple)
                 rt = score
                 st1 = self.state_for_agent(self.snake)
                 self.q.update(st, at, rt, st1)
+                # if self.snake.body_collision():
+                #     break
+                if self.snake.xx[0] == self.apple.get_apple_coordinates()[0] and self.snake.yy[0] == \
+                        self.apple.get_apple_coordinates()[1]:
+                    break
 
 
 class Snake:
@@ -171,19 +186,23 @@ class Snake:
         self.yy = []
         self.set_initial_coords()
         self.set_initial_coordss()
+        self.state_dict = {}
+
+    def spawn(self):
+        self.draw()
 
     def set_initial_coords(self):
-        self.x = [SNAKE_COORDINATES] * self.length
-        self.y = [SNAKE_COORDINATES] * self.length
+        self.x = [70, 60, 50]
+        self.y = [30, 30, 30]
 
     def set_initial_coordss(self):
-        self.xx = [SNAKE_COORDINATES] * self.length
-        self.yy = [SNAKE_COORDINATES] * self.length
+        self.xx = [70, 60, 50]
+        self.yy = [30, 30, 30]
 
     def reset_length(self):
         self.length = SNAKE_LENGTH
 
-    def compute_possible_moves(self, direction, rect):
+    def compute_possible_moves(self, direction, rect, initial_state, game):
         directions = ['up', 'down', 'left', 'right']
         ban_reverse = {
             'up': 'down',
@@ -203,23 +222,37 @@ class Snake:
         if ban_reverse[direction] in directions:
             directions.remove(ban_reverse[direction])
 
+        future_state_right = game.get_state_for_agent(self.xx[0] + SIZE, self.yy[0])
+        if future_state_right in initial_state and 'right' in directions:
+            directions.remove('right')
+        future_state_left = game.get_state_for_agent(self.xx[0] - SIZE, self.yy[0])
+        if future_state_left in initial_state and 'left' in directions:
+            directions.remove('left')
+        future_state_up = game.get_state_for_agent(self.xx[0], self.yy[0] - SIZE)
+        if future_state_up in initial_state and 'up' in directions:
+            directions.remove('up')
+        future_state_down = game.get_state_for_agent(self.xx[0], self.yy[0] + SIZE)
+        if future_state_down in initial_state and 'down' in directions:
+            directions.remove('down')
+
         # for direction in directions:
         #     if direction == 'left':
-        #         if self.x[0] - 10 in self.x[1:] and self.y[0] in self.y[1:]:
+        #         if self.xx[0] - 10 in self.xx[1:] and self.yy[0] in self.yy[1:]:
         #             directions.remove('left')
         #     if direction == 'right':
-        #         if self.x[0] + 10 == self.x[1:] and self.y[0] in self.y[1:]:
+        #         if self.xx[0] + 10 == self.xx[1:] and self.yy[0] in self.yy[1:]:
         #             directions.remove('right')
         #     if direction == 'up':
-        #         if self.y[0] - 10 == self.y[1:] and self.x[0] in self.x[1:]:
+        #         if self.yy[0] - 10 == self.yy[1:] and self.xx[0] in self.xx[1:]:
         #             directions.remove('up')
         #     if direction == 'down':
-        #         if self.y[0] + 10 == self.y[1:] and self.x[0] in self.x[1:]:
+        #         if self.yy[0] + 10 == self.yy[1:] and self.xx[0] in self.xx[1:]:
         #             directions.remove('down')
         # print(directions)
         return directions
 
     def move_for_q_learning(self, direction, apple):
+        score = -0.1
         for i in range(self.length - 1, 0, -1):
             self.xx[i] = self.xx[i - 1]
             self.yy[i] = self.yy[i - 1]
@@ -233,10 +266,49 @@ class Snake:
         if direction == 'down':
             self.yy[0] += SIZE
 
-        return 10 if self.xx[0] == apple.get_apple_coordinates()[0] and self.yy[0] == apple.get_apple_coordinates()[
-            1] else -5
+        if self.xx[0] == apple.get_apple_coordinates()[0] and self.yy[0] == apple.get_apple_coordinates()[1]:
+            score = 10
+        # elif self.body_collision():
+        #     score = -1
+
+        return score
 
     def move(self, direction, rect, apple, game):
+        # {'up': 0, 'down': 1, 'left': 2, 'right': 3}
+        # st = game.state_for_agentt(self)
+        # st_of_tail = game.get_state_for_agent(self.x[-1], self.y[-1])
+        # direction = IDX_TO_MOVES[np.argmax(game.q.q[st])]
+        # future_state = 0
+        # st_for_whole_body = game.get_state_for_whole_body(self)
+        # state_dict = {}
+        # for state in st_for_whole_body:
+        #     state_dict[state] = game.q.q[state].tolist()
+        #     game.q.q[state].fill(0)
+        # print(state_dict)
+
+        # if direction == 'right':
+        #     future_state = game.get_state_for_agent(self.x[0] + SIZE, self.y[0])
+        #     if future_state in st_for_whole_body:
+        #         direction = IDX_TO_MOVES[np.argsort(game.q.q[st])[-2]]
+        # if direction == 'left':
+        #     # self.x[0] -= SIZE
+        #     future_state = game.get_state_for_agent(self.x[0] - SIZE, self.y[0])
+        #     if future_state in st_for_whole_body:
+        #         direction = IDX_TO_MOVES[np.argsort(game.q.q[st])[-2]]
+        # if direction == 'up':
+        #     future_state = game.get_state_for_agent(self.x[0], self.y[0] - SIZE)
+        #     if future_state in st_for_whole_body:
+        #         direction = IDX_TO_MOVES[np.argsort(game.q.q[st])[-2]]
+        # if direction == 'down':
+        #     future_state = game.get_state_for_agent(self.x[0], self.y[0] + SIZE)
+        #     if future_state in st_for_whole_body:
+        #         direction = IDX_TO_MOVES[np.argsort(game.q.q[st])[-2]]
+        # st_for_whole_body = game.get_state_for_whole_body(self)
+        # if st in st_for_whole_body[1:]:
+        #     print(st)
+        #     direction = IDX_TO_MOVES[np.argsort(game.q.q[st])[-2]]
+        # else:
+        #     direction = IDX_TO_MOVES[np.argmax(game.q.q[st])]
         # print('x', self.x)
         # print('y', self.y)
         # take the position of the next element
@@ -280,9 +352,9 @@ class Snake:
             return True
 
     def body_collision(self):
-        for i in range(1, self.length):
-            if self.x[0] == self.x[i] and self.y[0] == self.y[i]:
-                return True
+        if self.xx[0] in self.xx[1:] and self.yy[0] in self.yy[1:]:
+            return True
+        return False
 
     # increase size of sname and append the new part at the end of the snake
     def increase_size(self):
@@ -305,7 +377,7 @@ class Apple:
         self.borders = borders
         self.apple = pygame.Surface((SIZE, SIZE))
         self.apple.fill(pygame.color.Color('red'))
-        self.x, self.y = self.generate_random_coords()
+        self.x, self.y = 30, 30
 
     # initial spawn of apple
     def spawn(self):
