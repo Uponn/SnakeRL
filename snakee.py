@@ -4,7 +4,6 @@ import random
 
 import numpy
 import numpy as np
-import pprint
 
 import pygame
 
@@ -28,7 +27,6 @@ class QLearning:
         self.g = discount_factor
 
     def update(self, st, at, rt, st1):
-        # print('st', st, 'at', at, 'rt', rt, 'st1', st1)
         self.q[st, at] = (1 - self.a) * self.q[st, at] + self.a * (rt + self.g * np.max(self.q[st1]))
 
 
