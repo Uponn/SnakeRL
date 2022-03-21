@@ -10,6 +10,7 @@ from Snake import Snake
 from SnakeRL import Agent
 from Text import Text
 from QLearning import QLearning
+from AStar import AStar
 
 
 SIZE = 10
@@ -37,14 +38,17 @@ class Game:
         self.board = pygame.display.set_mode((self.x, self.y))
         self.borders = Borders(self.board, int(sys.argv[1]), int(sys.argv[2]))
         self.apple = Apple(self.board, self.borders)
-        self.snake = Snake(self.board)
+        self.snake = Snake(self.board, self.apple)
         self.text = Text(self.board)
+        self.q = None
+        self.astar = None
         if self.type == 'rl':
             self.agent = Agent(self.board)
             self.q = QLearning(int(self.x / 10) ** 2, 4, self.agent, self.snake, self.apple)
             self.q.populate_q_table(self.borders.draw_borders())
         if self.type == 'a*':
-            pass
+            self.astar = AStar(self.snake, self.apple)
+            self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple())
 
     def play(self):
         clock = pygame.time.Clock()
@@ -68,9 +72,14 @@ class Game:
             rect = self.borders.draw_borders()
             self.apple.spawn()
             if self.is_rl():
-                st = self.snake.current_state_snake(self.snake)
+                st = self.snake.current_state_snake()
                 self.direction = IDX_TO_MOVES[int(np.argmax(self.q.q[st]))]
-            self.snake.move(self.direction, rect, self.apple, self.q, self)
+            if self.type == 'a*':
+                if self.apple.has_respawn:
+                    self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple())
+                    self.apple.has_respawn = False
+                self.direction = self.from_state_to_direction()
+            self.snake.move(self.direction, rect, self, self.q)
             pygame.display.flip()
 
     def increment_score(self):
@@ -110,3 +119,16 @@ class Game:
 
     def is_rl(self):
         return True if self.type == 'rl' else False
+
+    def from_state_to_direction(self):
+        direction = ''
+        if self.path[0] + 10 == self.path[1]:
+            direction = 'down'
+        elif self.path[0] - 10 == self.path[1]:
+            direction = 'up'
+        elif self.path[0] + 1 == self.path[1]:
+            direction = 'right'
+        elif self.path[0] - 1 == self.path[1]:
+            direction = 'left'
+        self.path.remove(self.path[0])
+        return direction
