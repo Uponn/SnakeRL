@@ -20,8 +20,8 @@ class Snake:
         self.draw()
 
     def set_initial_coords(self):
-        self.x = [30, 20, 10]
-        self.y = [80, 80, 80]
+        self.x = [70, 60, 50]
+        self.y = [30, 30, 30]
 
     def reset_length(self):
         self.length = SNAKE_LENGTH
@@ -94,9 +94,3 @@ class Snake:
         for x, y in zip(self.x, self.y):
             result.append(int(((x - 20) / 10) + ((y - 20) / 10) * 10))
         return result
-
-    def has_snake_eaten_apple(self):
-        # print('self.x[0]: ', self.x[0], 'self.apple.x', self.apple.x, 'self.y[0]', self.y[0], 'self.apple.y', self.apple.y)
-        if self.x[0] == self.apple.get_apple_coordinates()[0] and self.y[0] == self.apple.get_apple_coordinates()[1]:
-            return True
-        return False

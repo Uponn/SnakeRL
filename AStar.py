@@ -30,7 +30,8 @@ class AStar:
                 flag = True
         return total_path
 
-    def compute(self, start, end):
+    def compute(self, start, end, states_to_avoid):
+        states_to_avoid.remove(start)
         open_list = []
         closed_list = {}
 
@@ -47,7 +48,7 @@ class AStar:
             open_list.remove(current)
 
             for neighbor in [current + 10, current - 10, current + 1, current - 1]:
-                if neighbor in closed_list:
+                if neighbor in closed_list or neighbor in states_to_avoid:
                     continue
                 tentative_gscore = g_score[current] + 1
                 if neighbor not in open_list:

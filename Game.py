@@ -48,7 +48,8 @@ class Game:
             self.q.populate_q_table(self.borders.draw_borders())
         if self.type == 'a*':
             self.astar = AStar(self.snake, self.apple)
-            self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple())
+            self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple(),
+                                           self.snake.get_state_for_whole_body())
 
     def play(self):
         clock = pygame.time.Clock()
@@ -76,7 +77,8 @@ class Game:
                 self.direction = IDX_TO_MOVES[int(np.argmax(self.q.q[st]))]
             if self.type == 'a*':
                 if self.apple.has_respawn:
-                    self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple())
+                    self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple(),
+                                                   self.snake.get_state_for_whole_body())
                     self.apple.has_respawn = False
                 self.direction = self.from_state_to_direction()
             self.snake.move(self.direction, rect, self, self.q)
