@@ -75,7 +75,7 @@ class Game:
             if self.is_rl():
                 st = self.snake.current_state_snake()
                 self.direction = IDX_TO_MOVES[int(np.argmax(self.q.q[st]))]
-            if self.type == 'a*':
+            if self.is_astar():
                 if self.apple.has_respawn:
                     self.path = self.astar.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
                                                    self.snake.get_whole_body_coords())
@@ -121,6 +121,9 @@ class Game:
 
     def is_rl(self):
         return True if self.type == 'rl' else False
+
+    def is_astar(self):
+        return True if self.type == 'a*' else False
 
     def from_state_to_direction(self):
         direction = ''
