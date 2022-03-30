@@ -48,8 +48,8 @@ class Game:
             self.q.populate_q_table(self.borders.draw_borders())
         if self.type == 'a*':
             self.astar = AStar(self.snake, self.apple)
-            self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple(),
-                                           self.snake.get_state_for_whole_body())
+            self.path = self.astar.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
+                                           self.snake.get_whole_body_coords())
 
     def play(self):
         clock = pygame.time.Clock()
@@ -77,8 +77,8 @@ class Game:
                 self.direction = IDX_TO_MOVES[int(np.argmax(self.q.q[st]))]
             if self.type == 'a*':
                 if self.apple.has_respawn:
-                    self.path = self.astar.compute(self.snake.current_state_snake(), self.apple.current_state_apple(),
-                                                   self.snake.get_state_for_whole_body())
+                    self.path = self.astar.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
+                                                   self.snake.get_whole_body_coords())
                     self.apple.has_respawn = False
                 self.direction = self.from_state_to_direction()
             self.snake.move(self.direction, rect, self, self.q)
@@ -124,13 +124,13 @@ class Game:
 
     def from_state_to_direction(self):
         direction = ''
-        if self.path[0] + 10 == self.path[1]:
-            direction = 'down'
-        elif self.path[0] - 10 == self.path[1]:
-            direction = 'up'
-        elif self.path[0] + 1 == self.path[1]:
+        if self.path[0][0] + 10 == self.path[1][0]:
             direction = 'right'
-        elif self.path[0] - 1 == self.path[1]:
+        elif self.path[0][1] - 10 == self.path[1][1]:
+            direction = 'up'
+        elif self.path[0][1] + 10 == self.path[1][1]:
+            direction = 'down'
+        elif self.path[0][0] - 10 == self.path[1][0]:
             direction = 'left'
         self.path.remove(self.path[0])
         return direction

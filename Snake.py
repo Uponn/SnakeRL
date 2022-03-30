@@ -87,10 +87,16 @@ class Snake:
         return self.length
 
     def current_state_snake(self):
-        return int(((self.x[0] - 20) / 10) + ((self.y[0] - 20) / 10) * 10)
+        return int(((self.x[0] - 20) / 10) + ((self.y[0] - 20) / 10) * 20)
 
     def get_state_for_whole_body(self):
         result = []
         for x, y in zip(self.x, self.y):
-            result.append(int(((x - 20) / 10) + ((y - 20) / 10) * 10))
+            result.append(int(((x - 20) / 10) + ((y - 20) / 10) * 20))
         return result
+
+    def get_head_coords(self):
+        return (self.x[0], self.y[0])
+
+    def get_whole_body_coords(self):
+        return [(x, y) for x, y in zip(self.x, self.y)]

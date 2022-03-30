@@ -7,18 +7,7 @@ class AStar:
         self.apple = apple
 
     def compute_h(self, state):
-        x, y = self.from_state_to_coords(state)
-        return abs(x - self.apple.x) + abs(y - self.apple.y)
-
-    def get_digit(self, number, n):
-        return number // 10 ** n % 10
-
-    def from_state_to_coords(self, state):
-        x = self.get_digit(state, 0)
-        y = self.get_digit(state, 1)
-        x = ((x * 10) + 20)
-        y = ((y * 10) + 20)
-        return x, y
+        return abs(state[0] - self.apple.x) + abs(state[1] - self.apple.y)
 
     def reconstruct_path(self, came_from, current, start):
         total_path = [current]
@@ -30,8 +19,8 @@ class AStar:
                 flag = True
         return total_path
 
-    def compute(self, start, end, states_to_avoid):
-        states_to_avoid.remove(start)
+    def compute(self, start, end, coords_to_avoid):
+        coords_to_avoid.remove(start)
         open_list = []
         closed_list = {}
 
@@ -47,8 +36,9 @@ class AStar:
 
             open_list.remove(current)
 
-            for neighbor in [current + 10, current - 10, current + 1, current - 1]:
-                if neighbor in closed_list or neighbor in states_to_avoid:
+            for neighbors in [(10, 0), (-10, 0), (0, 10), (0, -10)]:
+                neighbor = tuple(x + y for x, y in zip(current, neighbors))
+                if neighbor in closed_list or neighbor in coords_to_avoid:
                     continue
                 tentative_gscore = g_score[current] + 1
                 if neighbor not in open_list:

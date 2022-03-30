@@ -26,7 +26,7 @@ class Apple:
         self.has_respawn = True
 
     def get_apple_coordinates(self):
-        return [self.x, self.y]
+        return (self.x, self.y)
 
     def generate_random_coords(self):
         self.x = random.randrange(self.borders.rect.x, self.borders.get_width(), SIZE)
@@ -41,4 +41,4 @@ class Apple:
         return False
 
     def current_state_apple(self):
-        return int(((self.x - 20) / 10) + ((self.y - 20) / 10) * 10)
+        return int(((self.x - 20) / 10) + ((self.y - 20) / 10) * 20)
