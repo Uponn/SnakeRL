@@ -5,8 +5,9 @@ SIZE = 10
 SNAKE_LENGTH = 3
 
 class Snake:
-    def __init__(self, board):
+    def __init__(self, board, apple):
         self.board = board
+        self.apple = apple
         self.snake = pygame.Surface((SIZE, SIZE))
         self.rect = None
 
@@ -25,7 +26,7 @@ class Snake:
     def reset_length(self):
         self.length = SNAKE_LENGTH
 
-    def move(self, direction, rect, apple, q, game):
+    def move(self, direction, rect, game, q):
         # take the position of the next element
         for i in range(self.length - 1, 0, -1):
             self.x[i] = self.x[i - 1]
@@ -41,10 +42,11 @@ class Snake:
             self.y[0] += SIZE
 
         # check if the head of the snake is on the current location of the spawned apple
-        if self.x[0] == apple.get_apple_coordinates()[0] and self.y[0] == apple.get_apple_coordinates()[1]:
-            apple.respawn(self.x, self.y)
-            q.reset_q_table()
-            q.populate_q_table(rect)
+        if self.x[0] == self.apple.get_apple_coordinates()[0] and self.y[0] == self.apple.get_apple_coordinates()[1]:
+            self.apple.respawn(self.x, self.y)
+            if q is not None:
+                q.reset_q_table()
+                q.populate_q_table(rect)
             self.increase_size()
             game.increment_score()
 
@@ -84,11 +86,17 @@ class Snake:
     def get_length(self):
         return self.length
 
-    def current_state_snake(self, snake):
-        return int(((snake.x[0] - 20) / 10) + ((snake.y[0] - 20) / 10) * 10)
+    def current_state_snake(self):
+        return int(((self.x[0] - 20) / 10) + ((self.y[0] - 20) / 10) * 20)
 
     def get_state_for_whole_body(self):
         result = []
         for x, y in zip(self.x, self.y):
-            result.append(int(((x - 20) / 10) + ((y - 20) / 10) * 10))
+            result.append(int(((x - 20) / 10) + ((y - 20) / 10) * 20))
         return result
+
+    def get_head_coords(self):
+        return (self.x[0], self.y[0])
+
+    def get_whole_body_coords(self):
+        return [(x, y) for x, y in zip(self.x, self.y)]
