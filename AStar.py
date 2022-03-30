@@ -6,8 +6,8 @@ class AStar:
         self.snake = snake
         self.apple = apple
 
-    def compute_h(self, state):
-        return abs(state[0] - self.apple.x) + abs(state[1] - self.apple.y)
+    def compute_h(self, xy):
+        return abs(xy[0] - self.apple.x) + abs(xy[1] - self.apple.y)
 
     def reconstruct_path(self, came_from, current, start):
         total_path = [current]
