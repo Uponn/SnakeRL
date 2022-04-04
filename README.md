@@ -1,5 +1,8 @@
 # Snake Game
 
+### Status: WIP
+Currently working on optimization for Reinforcement learning approach.
+
 ## Description
 A simple snake game with implementation of Reinforcement Learning algorithm and A* Path Finding algorithm for autonomous playthrough
 
