@@ -1,8 +1,12 @@
+import sys
+
 import pygame
 
 
 SIZE = 10
 SNAKE_LENGTH = 3
+NUM_STATES = int(int(sys.argv[1]) / 10)
+
 
 class Agent:
     def __init__(self, board):
@@ -17,7 +21,7 @@ class Agent:
         self.set_initial_coords()
 
     def set_initial_coords(self):
-        self.x = [70, 60, 50]
+        self.x = [40, 30, 20]
         self.y = [30, 30, 30]
 
     def compute_possible_moves(self, direction, rect, initial_state):
@@ -40,16 +44,16 @@ class Agent:
         if reverse_direction[direction] in directions:
             directions.remove(reverse_direction[direction])
 
-        future_state_right = self.get_state_for_agent(self.x[0] + SIZE, self.y[0])
+        future_state_right = self.__get_state_for_agent(self.x[0] + SIZE, self.y[0])
         if future_state_right in initial_state and 'right' in directions:
             directions.remove('right')
-        future_state_left = self.get_state_for_agent(self.x[0] - SIZE, self.y[0])
+        future_state_left = self.__get_state_for_agent(self.x[0] - SIZE, self.y[0])
         if future_state_left in initial_state and 'left' in directions:
             directions.remove('left')
-        future_state_up = self.get_state_for_agent(self.x[0], self.y[0] - SIZE)
+        future_state_up = self.__get_state_for_agent(self.x[0], self.y[0] - SIZE)
         if future_state_up in initial_state and 'up' in directions:
             directions.remove('up')
-        future_state_down = self.get_state_for_agent(self.x[0], self.y[0] + SIZE)
+        future_state_down = self.__get_state_for_agent(self.x[0], self.y[0] + SIZE)
         if future_state_down in initial_state and 'down' in directions:
             directions.remove('down')
         return directions
@@ -69,23 +73,18 @@ class Agent:
         if direction == 'down':
             self.y[0] += SIZE
 
-        if self.check_agent_on_reward(reward):
+        if self.__check_agent_on_reward(reward):
             score = 10
 
         return score
 
-    def body_collision(self):
-        if self.x[0] in self.x[1:] and self.y[0] in self.y[1:]:
-            return True
-        return False
-
     def state_for_agent(self):
-        return int(((self.x[0] - 20) / 10) + ((self.y[0] - 20) / 10) * 10)
+        return int(((self.x[0] - 20) / 10) + ((self.y[0] - 20) / 10) * NUM_STATES)
 
-    def get_state_for_agent(self, x, y):
-        return int(((x - 20) / 10) + ((y - 20) / 10) * 10)
+    def __get_state_for_agent(self, x, y):
+        return int(((x - 20) / 10) + ((y - 20) / 10) * NUM_STATES)
 
-    def check_agent_on_reward(self, reward):
+    def __check_agent_on_reward(self, reward):
         return True \
             if self.x[0] == reward.get_apple_coordinates()[0] and self.y[0] == reward.get_apple_coordinates()[1] \
             else False

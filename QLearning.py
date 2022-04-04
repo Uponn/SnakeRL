@@ -1,4 +1,5 @@
 import random
+
 import numpy as np
 
 
@@ -7,7 +8,7 @@ MOVES_TO_IDX = {'up': 0, 'down': 1, 'left': 2, 'right': 3}
 
 class QLearning:
     def __init__(self, num_states, num_actions, agent, snake, apple, learning_rate=0.1, discount_factor=1.0):
-        self.q = np.zeros((num_states, num_actions))
+        self.q_table = np.zeros((num_states, num_actions))
         self.a = learning_rate
         self.g = discount_factor
         self.agent = agent
@@ -15,15 +16,15 @@ class QLearning:
         self.apple = apple
 
     def update(self, st, at, rt, st1):
-        self.q[st, at] = (1 - self.a) * self.q[st, at] + self.a * (rt + self.g * np.max(self.q[st1]))
+        self.q_table[st, at] = (1 - self.a) * self.q_table[st, at] + self.a * (rt + self.g * np.max(self.q_table[st1]))
 
     def reset_q_table(self):
-        self.q.fill(0)
+        self.q_table.fill(0)
 
     def populate_q_table(self, rect):
         initial_state = self.snake.get_state_for_whole_body()
         direction = 'right'
-        for i in range(400):
+        for i in range(1000):
             self.agent.x = self.snake.x.copy()
             self.agent.y = self.snake.y.copy()
             flag = True
