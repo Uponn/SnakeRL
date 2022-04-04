@@ -6,10 +6,10 @@ class AStar:
         self.snake = snake
         self.apple = apple
 
-    def compute_h(self, xy):
+    def __compute_h(self, xy):
         return abs(xy[0] - self.apple.x) + abs(xy[1] - self.apple.y)
 
-    def reconstruct_path(self, came_from, current, start):
+    def __reconstruct_path(self, came_from, current, start):
         total_path = [current]
         flag = False
         while not flag:
@@ -32,19 +32,19 @@ class AStar:
         while open_list:
             current = min(open_list, key=f_score.get)
             if current == end:
-                return self.reconstruct_path(closed_list, current, start)
+                return self.__reconstruct_path(closed_list, current, start)
 
             open_list.remove(current)
 
-            for neighbors in [(10, 0), (-10, 0), (0, 10), (0, -10)]:
-                neighbor = tuple(x + y for x, y in zip(current, neighbors))
-                if neighbor in closed_list or neighbor in coords_to_avoid:
+            for neighbor in [(10, 0), (-10, 0), (0, 10), (0, -10)]:
+                current_neighbor = tuple(x + y for x, y in zip(current, neighbor))
+                if current_neighbor in closed_list or current_neighbor in coords_to_avoid:
                     continue
                 tentative_gscore = g_score[current] + 1
-                if neighbor not in open_list:
-                    open_list.append(neighbor)
-                elif tentative_gscore >= g_score[neighbor]:
+                if current_neighbor not in open_list:
+                    open_list.append(current_neighbor)
+                elif tentative_gscore >= g_score[current_neighbor]:
                     continue
-                closed_list[neighbor] = current
-                g_score[neighbor] = tentative_gscore
-                f_score[neighbor] = tentative_gscore + self.compute_h(neighbor)
+                closed_list[current_neighbor] = current
+                g_score[current_neighbor] = tentative_gscore
+                f_score[current_neighbor] = tentative_gscore + self.__compute_h(current_neighbor)

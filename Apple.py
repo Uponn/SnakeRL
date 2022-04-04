@@ -1,5 +1,6 @@
-import pygame
 import random
+
+import pygame
 
 SIZE = 10
 
@@ -10,8 +11,8 @@ class Apple:
         self.borders = borders
         self.apple = pygame.Surface((SIZE, SIZE))
         self.apple.fill(pygame.color.Color('red'))
-        self.has_respawn = False
-        self.x, self.y = 30, 30
+        self.has_respawned = False
+        self.x, self.y = self.generate_random_coords()
 
     # initial spawn of apple
     def spawn(self):
@@ -23,10 +24,10 @@ class Apple:
             self.respawn(snake_x, snake_y)
         else:
             self.board.blit(self.apple, (self.x, self.y))
-        self.has_respawn = True
+        self.has_respawned = True
 
     def get_apple_coordinates(self):
-        return (self.x, self.y)
+        return self.x, self.y
 
     def generate_random_coords(self):
         self.x = random.randrange(self.borders.rect.x, self.borders.get_width(), SIZE)
@@ -39,6 +40,3 @@ class Apple:
                     and self.y == snake_y[i]:
                 return True
         return False
-
-    def current_state_apple(self):
-        return int(((self.x - 20) / 10) + ((self.y - 20) / 10) * 20)

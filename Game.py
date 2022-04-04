@@ -1,5 +1,4 @@
 import sys
-import random
 
 import pygame
 import numpy as np
@@ -15,7 +14,7 @@ from AStar import AStar
 
 SIZE = 10
 PADDING = 40
-FPS = 1
+FPS = 5
 MIN_WIDTH_LIMIT = 100
 MIN_HEIGHT_LIMIT = 100
 MOVES_TO_IDX = {'up': 0, 'down': 1, 'left': 2, 'right': 3}
@@ -40,16 +39,16 @@ class Game:
         self.apple = Apple(self.board, self.borders)
         self.snake = Snake(self.board, self.apple)
         self.text = Text(self.board)
-        self.q = None
-        self.astar = None
+        self.q_learning = None
+        self.a_star = None
         if self.type == 'rl':
             self.agent = Agent(self.board)
-            self.q = QLearning(int(self.x / 10) ** 2, 4, self.agent, self.snake, self.apple)
-            self.q.populate_q_table(self.borders.draw_borders())
+            self.q_learning = QLearning(int(int(sys.argv[1]) / 10) ** 2, 4, self.agent, self.snake, self.apple)
+            self.q_learning.populate_q_table(self.borders.draw_borders())
         if self.type == 'a*':
-            self.astar = AStar(self.snake, self.apple)
-            self.path = self.astar.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
-                                           self.snake.get_whole_body_coords())
+            self.a_star = AStar(self.snake, self.apple)
+            self.path = self.a_star.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
+                                            self.snake.get_whole_body_coords())
 
     def play(self):
         clock = pygame.time.Clock()
@@ -72,16 +71,16 @@ class Game:
             self.board.fill(pygame.color.Color('green'))
             rect = self.borders.draw_borders()
             self.apple.spawn()
-            if self.is_rl():
+            if self.__is_rl():
                 st = self.snake.current_state_snake()
-                self.direction = IDX_TO_MOVES[int(np.argmax(self.q.q[st]))]
-            if self.is_astar():
-                if self.apple.has_respawn:
-                    self.path = self.astar.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
-                                                   self.snake.get_whole_body_coords())
-                    self.apple.has_respawn = False
-                self.direction = self.from_state_to_direction()
-            self.snake.move(self.direction, rect, self, self.q)
+                self.direction = IDX_TO_MOVES[int(np.argmax(self.q_learning.q_table[st]))]
+            if self.__is_astar():
+                if self.apple.has_respawned:
+                    self.path = self.a_star.compute(self.snake.get_head_coords(), self.apple.get_apple_coordinates(),
+                                                    self.snake.get_whole_body_coords())
+                    self.apple.has_respawned = False
+                self.direction = self.__from_state_to_direction()
+            self.snake.move(self.direction, rect, self, self.q_learning)
             pygame.display.flip()
 
     def increment_score(self):
@@ -91,41 +90,29 @@ class Game:
         self.text.display_game_won()
         self.fps = 0
 
-    # def game_over(self):
-    #     self.text.display_game_over()
-        # time.sleep(50)
+    def game_over(self):
+        self.text.display_game_over()
+        self.fps = 0
 
-
-    # def reset_game(self):
-    #     self.direction = 'right'
-    #     self.fps = FPS
-    #     self.score = 0
-    #     self.snake.reset_length()
-    #     self.snake.set_initial_coords()
-    #     self.apple.generate_random_coords()
-    #     self.play()
+    def reset_game(self):
+        self.direction = 'right'
+        self.fps = FPS
+        self.score = 0
+        self.snake.reset_length()
+        self.snake.set_initial_coords()
+        self.apple.generate_random_coords()
+        self.play()
 
     def get_fps(self):
         return self.fps
 
-    def get_snake_body_positions(self):
-        return self.x, self.y
-
-    def get_board_width(self):
-        return self.x
-
-    def get_percent(self):
-        board = (self.board.get_width() - PADDING) / SIZE * (self.board.get_height() - PADDING) / SIZE
-        percent = (board - (board - self.snake.get_length())) / board * 100
-        return percent
-
-    def is_rl(self):
+    def __is_rl(self):
         return True if self.type == 'rl' else False
 
-    def is_astar(self):
+    def __is_astar(self):
         return True if self.type == 'a*' else False
 
-    def from_state_to_direction(self):
+    def __from_state_to_direction(self):
         direction = ''
         if self.path[0][0] + 10 == self.path[1][0]:
             direction = 'right'
