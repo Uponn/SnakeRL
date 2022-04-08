@@ -1,9 +1,7 @@
 # Snake Game
 
 ### Status: WIP
-Currently working on optimization for Reinforcement learning approach.
-
-P.S. Currently there is an optimization implemented in branch rl-optimization which vastly improves learning time but presents a bug in rare occasions, which I'm working on currently.
+Cleaning bugs
 
 ## Description
 A simple snake game with implementation of Reinforcement Learning algorithm and A* Path Finding algorithm for autonomous playthrough

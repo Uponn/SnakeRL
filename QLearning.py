@@ -5,12 +5,12 @@ import numpy as np
 
 MOVES_TO_IDX = {'up': 0, 'down': 1, 'left': 2, 'right': 3}
 IDX_TO_MOVE = {0: 'up', 1: 'down', 2: 'left', 3: 'right'}
-MAX_EPISODES = 300
-SWITCH_EPISODES = 100
+MAX_EPISODES = 180
+SWITCH_EPISODES = 90
 
 
 class QLearning:
-    def __init__(self, num_states, num_actions, agent, snake, apple, learning_rate=0.5, discount_factor=1.0):
+    def __init__(self, num_states, num_actions, agent, snake, apple, learning_rate=1, discount_factor=1.0):
         self.q_table = np.zeros((num_states, num_actions))
         self.num_states = num_states
         self.a = learning_rate
@@ -54,4 +54,5 @@ class QLearning:
                 score = self.agent.move_for_q_learning(direction, self.apple)
                 rt = score
                 st1 = self.agent.state_for_agent()
-                self.update(st, at, rt, st1)
+                if 0 < st <= self.num_states or 0 < st1 <= self.num_states:
+                    self.update(st, at, rt, st1)
