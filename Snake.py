@@ -30,7 +30,7 @@ class Snake:
     def reset_length(self):
         self.length = SNAKE_LENGTH
 
-    def move(self, direction, rect, game, q_learning):
+    def move(self, direction, rect, game, q_learning, mode):
         # take the position of the next element
         for i in range(self.length - 1, 0, -1):
             self.x[i] = self.x[i - 1]
@@ -55,12 +55,12 @@ class Snake:
             game.increment_score()
 
         # checks for border collision
-        if self.__border_collision(rect):
+        if self.__border_collision(rect) and mode is None:
             game.game_over()
 
         # checks for snake collision in itself
-        # if self.__body_collision():
-        #     game.game_over()
+        if self.__body_collision() and mode is None:
+            game.game_over()
 
         if game.get_fps() != 0:
             self.draw()

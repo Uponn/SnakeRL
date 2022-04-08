@@ -33,7 +33,7 @@ class Game:
         self.score = 0
         self.x = int(sys.argv[1]) + PADDING
         self.y = int(sys.argv[2]) + PADDING
-        self.type = sys.argv[3].lower() if len(sys.argv) >= 4 else None
+        self.type = sys.argv[3].lower() if len(sys.argv) == 4 else None
         self.board = pygame.display.set_mode((self.x, self.y))
         self.borders = Borders(self.board, int(sys.argv[1]), int(sys.argv[2]))
         self.apple = Apple(self.board, self.borders)
@@ -80,7 +80,7 @@ class Game:
                                                     self.snake.get_whole_body_coords())
                     self.apple.has_respawned = False
                 self.direction = self.__from_state_to_direction()
-            self.snake.move(self.direction, rect, self, self.q_learning)
+            self.snake.move(self.direction, rect, self, self.q_learning, self.type)
             pygame.display.flip()
 
     def increment_score(self):

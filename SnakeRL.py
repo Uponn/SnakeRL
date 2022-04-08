@@ -73,7 +73,7 @@ class Agent:
         if direction == 'down':
             self.y[0] += SIZE
 
-        if self.__check_agent_on_reward(reward):
+        if self.has_reached_reward(reward):
             score = 10
 
         return score
@@ -84,7 +84,7 @@ class Agent:
     def __get_state_for_agent(self, x, y):
         return int(((x - 20) / 10) + ((y - 20) / 10) * NUM_STATES)
 
-    def __check_agent_on_reward(self, reward):
+    def has_reached_reward(self, reward):
         return True \
             if self.x[0] == reward.get_apple_coordinates()[0] and self.y[0] == reward.get_apple_coordinates()[1] \
             else False
