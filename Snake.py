@@ -55,8 +55,8 @@ class Snake:
             game.increment_score()
 
         # checks for border collision
-        if self.__border_collision(rect):
-            game.game_over()
+        # if self.__border_collision(rect):
+        #     game.game_over()
 
         # checks for snake collision in itself
         # if self.__body_collision():
